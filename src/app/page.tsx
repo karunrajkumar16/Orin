@@ -1,101 +1,247 @@
-import Image from "next/image";
+"use client";
+
+import { useRef, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { CATEGORIES, PRODUCTS } from '@/lib/data';
+import ProductCard from '@/components/ui/ProductCard';
+import CategoryCard from '@/components/ui/CategoryCard';
+import { Button } from '@/components/ui/Button';
+import ThreeDViewer from '@/components/ui/ThreeDViewer';
+import { UploadCloud, Sliders, Box, ArrowDown } from 'lucide-react';
+
+const fadeInUp = {
+  hidden: { opacity: 0, y: 40 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.2
+    }
+  }
+};
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const featuredProducts = PRODUCTS.slice(0, 6);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  const heroRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"]
+  });
+
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    return scrollYProgress.onChange((latest) => {
+      setScrollProgress(latest);
+    });
+  }, [scrollYProgress]);
+
+  // Transform values for text fading and sliding based on scroll
+  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+  const y = useTransform(scrollYProgress, [0, 1], [0, -100]);
+  const scale = useTransform(scrollYProgress, [0, 0.5], [1, 0.95]);
+
+  return (
+    <div className="flex flex-col min-h-screen font-sans">
+      {/* Immersive Scroll Hero Section */}
+      <section ref={heroRef} className="relative h-[150vh] bg-background">
+
+        {/* Sticky Container */}
+        <div className="sticky top-0 h-screen w-full overflow-hidden flex flex-col items-center justify-center">
+
+          {/* Sibling Layer: 3D Object */}
+          <div className="absolute inset-0 z-0 flex items-center justify-center opacity-80 pointer-events-none">
+            <ThreeDViewer scrollYProgress={scrollProgress} />
+          </div>
+
+          {/* Sibling Layer: Foreground Text */}
+          <motion.div
+            style={{ opacity, y, scale }}
+            className="relative z-10 container mx-auto px-6 text-center pt-20"
           >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              variants={staggerContainer}
+              className="max-w-4xl mx-auto backdrop-blur-[2px] bg-white/30 p-8 rounded-3xl"
+            >
+              <motion.h1
+                variants={fadeInUp}
+                className="text-6xl md:text-8xl font-black tracking-tighter text-gray-900 leading-[1.05] mb-6"
+              >
+                Precision 3D Printing for <br className="hidden md:block" />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-400">Custom Creations</span>
+              </motion.h1>
+
+              <motion.p
+                variants={fadeInUp}
+                className="text-xl md:text-2xl text-gray-800 mb-10 leading-relaxed font-medium max-w-2xl mx-auto"
+              >
+                Transform your digital models or 2D photos into breathtaking physical objects. Premium quality, expertly crafted, and delivered to your door.
+              </motion.p>
+
+              <motion.div
+                variants={fadeInUp}
+                className="flex flex-col sm:flex-row gap-4 justify-center"
+              >
+                <Link href="/shop" className="pointer-events-auto">
+                  <Button size="lg" className="w-full sm:w-auto px-10 text-lg shadow-xl shadow-primary/20">
+                    Shop Products
+                  </Button>
+                </Link>
+                <Link href="/custom-print" className="pointer-events-auto">
+                  <Button variant="outline" size="lg" className="w-full sm:w-auto px-10 text-lg bg-white/60 backdrop-blur-md border-gray-300 hover:border-primary">
+                    Customize Your Print
+                  </Button>
+                </Link>
+              </motion.div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.5, duration: 1 }}
+              className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce text-gray-400 cursor-pointer pointer-events-auto"
+              onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
+            >
+              <ArrowDown size={32} />
+            </motion.div>
+          </motion.div>
+
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+      </section>
+
+      {/* Featured Products */}
+      <section className="py-32 bg-white overflow-hidden relative z-20 rounded-t-[40px] -mt-[40px] shadow-[0_-20px_50px_rgba(0,0,0,0.05)] border-t border-gray-100">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerContainer}
+          className="container mx-auto px-6 md:px-12"
         >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          <div className="flex justify-between items-end mb-16">
+            <motion.div variants={fadeInUp}>
+              <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-gray-900 mb-4">Featured Collections</h2>
+              <p className="text-lg text-gray-500 max-w-2xl">Discover our most popular premium 3D printed accessories and art pieces, crafted with extreme precision.</p>
+            </motion.div>
+            <motion.div variants={fadeInUp}>
+              <Link href="/shop" className="hidden md:inline-flex text-primary font-bold hover:text-[#5A3FE0] transition-colors items-center gap-2 text-lg">
+                View All <span>&rarr;</span>
+              </Link>
+            </motion.div>
+          </div>
+
+          <motion.div variants={fadeInUp} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {featuredProducts.map((product, index) => (
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <ProductCard product={product} />
+              </motion.div>
+            ))}
+          </motion.div>
+
+          <div className="mt-12 text-center md:hidden">
+            <Link href="/shop">
+              <Button size="lg" className="w-full">View All Products</Button>
+            </Link>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* Categories */}
+      <section className="py-32 bg-gray-50 overflow-hidden">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerContainer}
+          className="container mx-auto px-6 md:px-12"
         >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          <motion.div variants={fadeInUp} className="text-center max-w-3xl mx-auto mb-20">
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-gray-900 mb-6">Explore Categories</h2>
+            <p className="text-lg text-gray-500">Find exactly what you need from our beautifully curated collections.</p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {CATEGORIES.map((category, index) => (
+              <motion.div
+                key={category.id}
+                variants={fadeInUp}
+              >
+                <CategoryCard category={category} />
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      </section>
+
+      {/* How It Works */}
+      <section className="py-32 bg-white overflow-hidden">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerContainer}
+          className="container mx-auto px-6 md:px-12"
         >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          <motion.div variants={fadeInUp} className="text-center max-w-3xl mx-auto mb-24">
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-gray-900 mb-6">Create Custom Prints in 3 Steps</h2>
+            <p className="text-lg text-gray-500">We made the custom 3D printing process incredibly simple and intuitive.</p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-16 relative">
+            <motion.div
+              initial={{ scaleX: 0 }}
+              whileInView={{ scaleX: 1 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 1, delay: 0.2 }}
+              className="hidden md:block absolute top-[60px] left-[15%] right-[15%] h-[2px] bg-gradient-to-r from-lavender-light via-primary/30 to-lavender-light z-0 origin-left"
+            />
+
+            <motion.div variants={fadeInUp} className="relative z-10 flex flex-col items-center text-center group">
+              <div className="w-32 h-32 rounded-3xl bg-white flex items-center justify-center mb-8 shadow-xl shadow-primary/5 border border-lavender group-hover:-translate-y-2 transition-transform duration-500">
+                <UploadCloud size={48} className="text-primary" />
+              </div>
+              <h3 className="text-2xl font-bold mb-4">1. Upload Design</h3>
+              <p className="text-gray-500 leading-relaxed">Upload your 3D file (.STL, .OBJ) or even a 2D photo for our designers to convert.</p>
+            </motion.div>
+
+            <motion.div variants={fadeInUp} className="relative z-10 flex flex-col items-center text-center group">
+              <div className="w-32 h-32 rounded-3xl bg-white flex items-center justify-center mb-8 shadow-xl shadow-primary/5 border border-lavender group-hover:-translate-y-2 transition-transform duration-500">
+                <Sliders size={48} className="text-primary" />
+              </div>
+              <h3 className="text-2xl font-bold mb-4">2. Choose Specs</h3>
+              <p className="text-gray-500 leading-relaxed">Select your preferred material, size, and color using our live interactive preview.</p>
+            </motion.div>
+
+            <motion.div variants={fadeInUp} className="relative z-10 flex flex-col items-center text-center group">
+              <div className="w-32 h-32 rounded-3xl bg-white flex items-center justify-center mb-8 shadow-xl shadow-primary/5 border border-lavender group-hover:-translate-y-2 transition-transform duration-500">
+                <Box size={48} className="text-primary" />
+              </div>
+              <h3 className="text-2xl font-bold mb-4">3. Receive Print</h3>
+              <p className="text-gray-500 leading-relaxed">We carefully print, inspect, and ship your premium quality physical object to your door.</p>
+            </motion.div>
+          </div>
+
+          <motion.div variants={fadeInUp} className="mt-20 text-center">
+            <Link href="/custom-print">
+              <Button size="lg" className="px-12 py-6 text-lg rounded-2xl shadow-xl shadow-primary/20">Start Custom Print</Button>
+            </Link>
+          </motion.div>
+        </motion.div>
+      </section>
     </div>
   );
 }
