@@ -2,7 +2,8 @@
 
 import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { PRODUCTS, CATEGORIES } from '@/lib/data';
+import { CATEGORIES } from '@/lib/data';
+import { useProducts } from '@/hooks/useProducts';
 import ProductCard from '@/components/ui/ProductCard';
 import { Filter, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -13,19 +14,15 @@ function ShopContent() {
 
     const [activeCategory, setActiveCategory] = useState<string | null>(initCategory);
     const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+    
+    const { products } = useProducts();
 
     // Filter state
-    const [materials, setMaterials] = useState<string[]>([]);
-    const [priceRange, setPriceRange] = useState<number>(100);
+    const [priceRange, setPriceRange] = useState<number>(3000);
 
-    const toggleMaterial = (mat: string) => {
-        setMaterials(prev => prev.includes(mat) ? prev.filter(m => m !== mat) : [...prev, mat]);
-    };
-
-    const filteredProducts = PRODUCTS.filter(p => {
+    const filteredProducts = products.filter(p => {
         if (activeCategory && activeCategory !== 'all' && p.category !== activeCategory) return false;
         if (p.price > priceRange) return false;
-        if (materials.length > 0 && !p.materials.some(m => materials.includes(m))) return false;
         return true;
     });
 
@@ -72,31 +69,16 @@ function ShopContent() {
                                 </div>
                             </div>
 
-                            {/* Material Filter */}
-                            <div>
-                                <h4 className="font-semibold text-gray-900 mb-3">Material</h4>
-                                <div className="space-y-2">
-                                    {['PLA', 'PETG'].map(mat => (
-                                        <label key={mat} className="flex items-center space-x-3 cursor-pointer group">
-                                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${materials.includes(mat) ? 'bg-primary border-primary' : 'border-gray-300 group-hover:border-primary'}`}>
-                                                {materials.includes(mat) && <div className="w-2.5 h-2.5 bg-white rounded-sm" />}
-                                            </div>
-                                            <span className="text-sm text-gray-700">{mat}</span>
-                                            <input type="checkbox" className="hidden" checked={materials.includes(mat)} onChange={() => toggleMaterial(mat)} />
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-
                             {/* Price Range */}
                             <div>
                                 <h4 className="font-semibold text-gray-900 mb-3 flex justify-between">
-                                    Price <span>Up to ${priceRange}</span>
+                                    Price <span>Up to ₹{priceRange}</span>
                                 </h4>
                                 <input
                                     type="range"
                                     min="0"
-                                    max="100"
+                                    max="3000"
+                                    step="100"
                                     value={priceRange}
                                     onChange={(e) => setPriceRange(Number(e.target.value))}
                                     className="w-full h-2 bg-lavender-light rounded-lg appearance-none cursor-pointer accent-primary"
@@ -127,7 +109,7 @@ function ShopContent() {
                     <div className="text-center py-24 bg-gray-50 rounded-2xl border border-gray-100 border-dashed">
                         <h3 className="text-lg font-bold text-gray-900 mb-2">No products found</h3>
                         <p className="text-gray-500 mb-6">Try adjusting your filters or category selection.</p>
-                        <Button onClick={() => { setActiveCategory(null); setMaterials([]); setPriceRange(100); }}>
+                        <Button onClick={() => { setActiveCategory(null); setPriceRange(3000); }}>
                             Reset Filters
                         </Button>
                     </div>

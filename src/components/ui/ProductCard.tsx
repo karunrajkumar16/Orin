@@ -2,16 +2,58 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Share2 } from 'lucide-react';
+import { ShoppingCart, Share2, Check } from 'lucide-react';
 import { Button } from './Button';
 import { Product } from '@/lib/data';
+import { useCart } from '@/context/CartContext';
 
 interface ProductCardProps {
     product: Product;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+    const [copied, setCopied] = useState(false);
+    const [added, setAdded] = useState(false);
+    const { addToCart } = useCart();
+
+    const handleAddToCart = (e: React.MouseEvent) => {
+        e.preventDefault();
+        addToCart({
+            productId: product.id ?? (product as unknown as { _id: string })._id,
+            name: product.name,
+            price: product.price,
+            quantity: 1,
+            image: product.image,
+            size: product.sizes?.[0] ?? 'Standard',
+        });
+        setAdded(true);
+        setTimeout(() => setAdded(false), 2000);
+    };
+
+    const handleShare = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        const url = `${window.location.origin}/product/${product.id}`;
+        try {
+            if (navigator.share) {
+                await navigator.share({ title: product.name, url });
+            } else {
+                await navigator.clipboard.writeText(url);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            }
+        } catch {
+            const input = document.createElement('input');
+            input.value = url;
+            document.body.appendChild(input);
+            input.select();
+            document.execCommand('copy');
+            document.body.removeChild(input);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
+    };
     return (
         <motion.div
             whileHover={{ y: -5, rotateX: 2, rotateY: -2 }}
@@ -42,7 +84,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                                     </h3>
                                 </Link>
                             </div>
-                            <p className="text-lg font-bold text-primary">${product.price}</p>
+                            <p className="text-lg font-bold text-primary">₹{product.price.toLocaleString('en-IN')}</p>
                         </div>
                         <p className="text-sm text-gray-500 line-clamp-2 mt-1">
                             {product.description || "Premium 3D printed object, beautifully designed and expertly crafted for your space."}
@@ -50,14 +92,11 @@ export default function ProductCard({ product }: ProductCardProps) {
                     </div>
 
                     <div className="mt-4 flex animate-in fade-in slide-in-from-bottom-2 items-center justify-between opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300">
-                        <Link href="/cart" className="flex-1 mr-2">
-                            <Button size="sm" className="w-full flex items-center justify-center gap-2">
-                                <ShoppingCart size={16} />
-                                Add to Cart
-                            </Button>
-                        </Link>
-                        <Button variant="outline" size="sm" className="px-3">
-                            <Share2 size={16} />
+                        <Button size="sm" className="flex-1 mr-2 flex items-center justify-center gap-2" onClick={handleAddToCart}>
+                            {added ? <><Check size={16} /> Added!</> : <><ShoppingCart size={16} /> Add to Cart</>}
+                        </Button>
+                        <Button variant="outline" size="sm" className="px-3" onClick={handleShare}>
+                            {copied ? <Check size={16} className="text-green-500" /> : <Share2 size={16} />}
                         </Button>
                     </div>
                 </div>

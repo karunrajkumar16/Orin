@@ -1,20 +1,39 @@
 "use client";
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, ShoppingBag, Users, Printer, Settings, LogOut } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { LayoutDashboard, Package, ShoppingBag, LogOut } from 'lucide-react';
 import clsx from 'clsx';
+import { useEffect } from 'react';
+import { AdminAuthProvider, useAdminAuth } from '@/context/AdminAuthContext';
 
 const navItems = [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { name: 'Products', href: '/admin/products', icon: Package },
     { name: 'Orders', href: '/admin/orders', icon: ShoppingBag },
-    { name: 'Customers', href: '/admin/customers', icon: Users },
-    { name: 'Custom Prints', href: '/admin/custom-prints', icon: Printer },
 ];
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+function AdminShell({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
+    const router = useRouter();
+    const { admin, isLoading, logout } = useAdminAuth();
+
+    useEffect(() => {
+        if (!isLoading && !admin && pathname !== '/admin/login') {
+            router.replace('/admin/login');
+        }
+    }, [admin, isLoading, pathname, router]);
+
+    // Show login page without sidebar
+    if (pathname === '/admin/login') return <>{children}</>;
+
+    if (isLoading || !admin) {
+        return (
+            <div className="fixed inset-0 flex items-center justify-center bg-gray-50">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
+    }
 
     return (
         <div className="fixed inset-0 z-[100] flex h-screen bg-gray-50 overflow-hidden text-gray-900">
@@ -48,15 +67,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     </nav>
                 </div>
 
-                <div className="p-4 border-t border-gray-100">
-                    <div className="space-y-1">
-                        <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors text-left">
-                            <Settings size={20} className="text-gray-400" /> Settings
-                        </button>
-                        <Link href="/" className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-colors text-left border-t border-gray-50 mt-2 pt-4">
-                            <LogOut size={20} className="text-red-400" /> Return to Store
-                        </Link>
-                    </div>
+                <div className="p-4 border-t border-gray-100 space-y-1">
+                    <Link href="/" className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+                        ← Return to Store
+                    </Link>
+                    <button
+                        onClick={logout}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-colors text-left"
+                    >
+                        <LogOut size={20} className="text-red-400" /> Logout
+                    </button>
                 </div>
             </aside>
 
@@ -69,8 +89,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             A
                         </div>
                         <div>
-                            <p className="text-sm font-bold text-gray-900">Admin User</p>
-                            <p className="text-xs text-gray-500">Store Manager</p>
+                            <p className="text-sm font-bold text-gray-900">Admin</p>
+                            <p className="text-xs text-gray-500">{admin.email}</p>
                         </div>
                     </div>
                 </header>
@@ -80,5 +100,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </main>
             </div>
         </div>
+    );
+}
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+    return (
+        <AdminAuthProvider>
+            <AdminShell>{children}</AdminShell>
+        </AdminAuthProvider>
     );
 }
