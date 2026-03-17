@@ -1,79 +1,30 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
-import { useProducts } from '@/hooks/useProducts';
+import Link from 'next/link';
+import { PRODUCTS } from '@/lib/data';
 import { Button } from '@/components/ui/Button';
 import { ShoppingCart, Share2, Check, ShieldCheck, Truck } from 'lucide-react';
 import ThreeDViewer from '@/components/ui/ThreeDViewer';
-import { useCart } from '@/context/CartContext';
-import QuantitySelector from '@/components/ui/QuantitySelector';
 
 export default function ProductDetails({ params }: { params: { id: string } }) {
-    const { products } = useProducts();
-    const { addToCart } = useCart();
-    const [addedToCart, setAddedToCart] = useState(false);
+    const product = PRODUCTS.find(p => p.id === params.id) || PRODUCTS[0]; // fallback
 
-    const [selectedSize, setSelectedSize] = useState('');
+    const [selectedMaterial, setSelectedMaterial] = useState(product.materials[0]);
+    const [selectedColor, setSelectedColor] = useState(product.colors[0]);
+    const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
     const [quantity, setQuantity] = useState(1);
     const [show3D, setShow3D] = useState(false);
     const [copied, setCopied] = useState(false);
 
-    const product = products.find(p => p.id === params.id) ?? products[0];
-
-    // Sync defaults when product loads
-    useEffect(() => {
-        if (product) {
-            setSelectedSize(product.sizes[0]);
-        }
-    }, [product?.id]);
-
-    if (!product) {
-        return (
-            <div className="container mx-auto px-6 py-32 text-center">
-                <p className="text-gray-500 text-lg">Loading product...</p>
-            </div>
-        );
-    }
-
-    const handleAddToCart = () => {
-        addToCart({
-            productId: product.id ?? (product as unknown as { _id: string })._id,
-            name: product.name,
-            price: totalPrice / quantity,
-            quantity,
-            image: product.image,
-            size: selectedSize,
-        });
-        setAddedToCart(true);
-        setTimeout(() => setAddedToCart(false), 2000);
+    const handleShare = () => {
+        navigator.clipboard.writeText(window.location.href);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
     };
 
-    const handleShare = async () => {
-        const url = window.location.href;
-        try {
-            if (navigator.share) {
-                await navigator.share({ title: product.name, url });
-            } else {
-                await navigator.clipboard.writeText(url);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
-            }
-        } catch {
-            // fallback: create a temp input and copy
-            const input = document.createElement('input');
-            input.value = url;
-            document.body.appendChild(input);
-            input.select();
-            document.execCommand('copy');
-            document.body.removeChild(input);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        }
-    };
-
-    const sizeAddon = selectedSize === 'Large' ? 200 : selectedSize === 'Medium' ? 100 : 0;
-    const totalPrice = Math.round(product.price + sizeAddon) * quantity;
+    const totalPrice = product.price * quantity + (selectedSize === 'Large' ? 10 : selectedSize === 'Medium' ? 5 : 0);
 
     return (
         <div className="container mx-auto px-6 md:px-12 py-12 md:py-20">
@@ -121,22 +72,47 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
                     <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight mb-4">
                         {product.name}
                     </h1>
-                    <div className="flex items-center gap-3 mb-6">
-                        <p className="text-3xl font-light text-gray-900">
-                            ₹{totalPrice.toLocaleString('en-IN')}
-                        </p>
-                        {product.originalPrice > product.price && (
-                            <>
-                                <p className="text-lg text-gray-400 line-through">₹{product.originalPrice.toLocaleString('en-IN')}</p>
-                                <span className="text-sm font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-md">{product.discountPercentage}% off</span>
-                            </>
-                        )}
-                    </div>
+                    <p className="text-3xl font-light text-gray-900 mb-6">
+                        ${totalPrice.toFixed(2)}
+                    </p>
                     <p className="text-gray-600 text-lg leading-relaxed mb-8 border-b border-gray-100 pb-8">
                         {product.description}
                     </p>
 
                     <div className="space-y-8 mb-10">
+                        {/* Options */}
+                        <div className="grid grid-cols-2 gap-8">
+                            <div>
+                                <h4 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wide">Material</h4>
+                                <div className="flex flex-wrap gap-3">
+                                    {product.materials.map(mat => (
+                                        <button
+                                            key={mat}
+                                            onClick={() => setSelectedMaterial(mat)}
+                                            className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${selectedMaterial === mat ? 'border-primary bg-lavender-light text-primary' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}
+                                        >
+                                            {mat}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wide">Color</h4>
+                                <div className="flex flex-wrap gap-2">
+                                    {product.colors.map(color => (
+                                        <button
+                                            key={color}
+                                            onClick={() => setSelectedColor(color)}
+                                            className={`h-10 px-4 rounded-lg text-sm font-medium border transition-all ${selectedColor === color ? 'border-primary bg-lavender-light text-primary' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}
+                                        >
+                                            {color}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
                         <div>
                             <h4 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wide">Size</h4>
                             <div className="flex flex-wrap gap-3">
@@ -154,18 +130,36 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
 
                         <div>
                             <h4 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wide">Quantity</h4>
-                            <QuantitySelector value={quantity} onChange={setQuantity} />
+                            <div className="flex items-center w-32 border border-gray-200 rounded-lg overflow-hidden bg-white">
+                                <button
+                                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                    className="w-10 h-10 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-primary transition-colors cursor-pointer"
+                                >
+                                    -
+                                </button>
+                                <input
+                                    type="number"
+                                    value={quantity}
+                                    readOnly
+                                    className="flex-1 h-10 text-center font-medium bg-transparent border-none outline-none focus:ring-0 p-0"
+                                />
+                                <button
+                                    onClick={() => setQuantity(quantity + 1)}
+                                    className="w-10 h-10 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-primary transition-colors cursor-pointer"
+                                >
+                                    +
+                                </button>
+                            </div>
                         </div>
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-4 mb-10">
-                        <Button size="lg" className="flex-1 text-lg flex items-center justify-center gap-3" onClick={handleAddToCart}>
-                            {addedToCart ? (
-                                <><Check size={22} /> Added to Cart</>
-                            ) : (
-                                <><ShoppingCart size={22} /> Add to Cart — ₹{totalPrice.toLocaleString('en-IN')}</>
-                            )}
-                        </Button>
+                        <Link href="/cart" className="flex-1">
+                            <Button size="lg" className="w-full text-lg flex items-center justify-center gap-3">
+                                <ShoppingCart size={22} />
+                                Add to Cart - ${totalPrice.toFixed(2)}
+                            </Button>
+                        </Link>
                         <Button
                             variant="outline"
                             size="lg"
@@ -177,6 +171,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
                         </Button>
                     </div>
 
+                    {/* Info blocks */}
                     <div className="grid grid-cols-2 gap-4 pt-8 border-t border-gray-100">
                         <div className="flex items-start gap-3">
                             <div className="p-2 bg-green-50 text-green-600 rounded-lg">
@@ -197,6 +192,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
                             </div>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>

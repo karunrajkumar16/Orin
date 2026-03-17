@@ -1,30 +1,25 @@
 "use client";
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/Button';
-import { calculatePrintPrice } from '@/lib/data';
 import { UploadCloud, Image as ImageIcon, Box, AlertCircle, Info } from 'lucide-react';
-import QuantitySelector from '@/components/ui/QuantitySelector';
+import { Button } from '@/components/ui/Button';
 
 export default function CustomPrint() {
     const [uploadType, setUploadType] = useState<'3d' | '2d'>('3d');
     const [file, setFile] = useState<File | null>(null);
     const [size, setSize] = useState<number>(5);
-    const [material, setMaterial] = useState<'PLA' | 'ABS' | 'Resin'>('PLA');
+    const [material, setMaterial] = useState<'PLA' | 'PETG'>('PLA');
     const [quantity, setQuantity] = useState<number>(1);
 
     // Price Calculation Logic
-    const estimatedHours = size * 0.8; // rough estimate: 0.8h per inch
-    const conversionFee = uploadType === '2d' ? 500 : 0;
-    const basePrice = 299 + size * 50; // base scales with size
+    const basePrice = 15;
+    const materialMultiplier = material === 'PETG' ? 1.5 : 1;
+    const sizeMultiplier = Math.pow(size / 3, 1.5); // non-linear scaling for volume
+    const conversionFee = uploadType === '2d' ? 25 : 0;
 
-    const unitPrice = calculatePrintPrice({
-        basePrice,
-        material,
-        quantity: 1,
-        estimatedPrintTimeHours: estimatedHours,
-    });
-    const totalPrice = unitPrice * quantity + conversionFee;
+    const unitPrice = (basePrice * materialMultiplier * sizeMultiplier);
+    const totalItemsPrice = unitPrice * quantity;
+    const totalPrice = totalItemsPrice + conversionFee;
 
     return (
         <div className="container mx-auto px-6 md:px-12 py-12 md:py-20">
@@ -64,7 +59,7 @@ export default function CustomPrint() {
                         {uploadType === '2d' && (
                             <div className="mb-6 p-4 bg-blue-50 text-blue-800 rounded-xl flex items-start gap-3">
                                 <Info size={20} className="shrink-0 mt-0.5" />
-                                <p className="text-sm">2D images require additional 3D modeling work. A standard conversion fee of ₹500 will be added to your order.</p>
+                                <p className="text-sm">2D images require additional 3D modeling work. A standard conversion fee of $25 will be added to your order.</p>
                             </div>
                         )}
 
@@ -112,15 +107,15 @@ export default function CustomPrint() {
                             <div>
                                 <h3 className="font-semibold text-gray-900 mb-4">Material</h3>
                                 <div className="flex gap-4">
-                                    {['PLA', 'ABS', 'Resin'].map((mat) => (
+                                    {['PLA', 'PETG'].map((mat) => (
                                         <button
                                             key={mat}
-                                            onClick={() => setMaterial(mat as 'PLA' | 'ABS' | 'Resin')}
+                                            onClick={() => setMaterial(mat as 'PLA' | 'PETG')}
                                             className={`flex-1 py-3 rounded-xl font-medium border-2 transition-colors ${material === mat ? 'border-primary bg-lavender-light text-primary' : 'border-gray-100 text-gray-600 hover:border-gray-200'}`}
                                         >
                                             {mat}
                                             <span className="block text-xs font-normal opacity-70 mt-0.5">
-                                                {mat === 'PLA' ? 'Standard, eco-friendly' : mat === 'ABS' ? 'Durable, heat-resistant' : 'Ultra-detail finish'}
+                                                {mat === 'PLA' ? 'Standard, eco-friendly' : 'Durable, heat-resistant'}
                                             </span>
                                         </button>
                                     ))}
@@ -130,7 +125,26 @@ export default function CustomPrint() {
                             {/* Quantity */}
                             <div>
                                 <h3 className="font-semibold text-gray-900 mb-4">Quantity</h3>
-                                <QuantitySelector value={quantity} onChange={setQuantity} />
+                                <div className="flex items-center w-32 border-2 border-gray-100 rounded-xl overflow-hidden bg-white">
+                                    <button
+                                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                        className="w-10 h-12 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-primary transition-colors cursor-pointer"
+                                    >
+                                        -
+                                    </button>
+                                    <input
+                                        type="number"
+                                        value={quantity}
+                                        readOnly
+                                        className="flex-1 h-12 text-center font-medium bg-transparent border-none outline-none focus:ring-0 p-0"
+                                    />
+                                    <button
+                                        onClick={() => setQuantity(quantity + 1)}
+                                        className="w-10 h-12 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-primary transition-colors cursor-pointer"
+                                    >
+                                        +
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -144,10 +158,10 @@ export default function CustomPrint() {
                         <div className="space-y-4 mb-6 text-sm">
                             <div className="flex justify-between text-gray-300">
                                 <span>Material Cost ({material})</span>
-                                <span>₹{unitPrice.toLocaleString('en-IN')}</span>
+                                <span>${unitPrice.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between text-gray-300">
-                                <span>Size ({size}&quot;)</span>
+                                <span>Size Multiplier ({size}&quot;)</span>
                                 <span>Included</span>
                             </div>
                             <div className="flex justify-between text-gray-300">
@@ -157,7 +171,7 @@ export default function CustomPrint() {
                             {uploadType === '2d' && (
                                 <div className="flex justify-between text-blue-300 pt-2 border-t border-gray-700">
                                     <span>2D to 3D Conversion Fee</span>
-                                    <span>₹{conversionFee}</span>
+                                    <span>${conversionFee.toFixed(2)}</span>
                                 </div>
                             )}
                         </div>
@@ -165,7 +179,7 @@ export default function CustomPrint() {
                         <div className="pt-6 border-t border-gray-700 mb-8">
                             <div className="flex justify-between items-end mb-2">
                                 <span className="text-gray-300">Total Estimated Price</span>
-                                <span className="text-3xl font-bold text-white">₹{totalPrice.toLocaleString('en-IN')}</span>
+                                <span className="text-3xl font-bold text-white">${totalPrice.toFixed(2)}</span>
                             </div>
                             <p className="text-xs text-gray-400">Final price subject to file analysis.</p>
                         </div>

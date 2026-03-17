@@ -1,197 +1,115 @@
-"use client";
-
-import { useEffect, useState } from 'react';
-import { IndianRupee, ShoppingBag, Clock, Package, TrendingUp } from 'lucide-react';
-import { useAdminAuth } from '@/context/AdminAuthContext';
-import Link from 'next/link';
-
-interface OrderItem {
-    name: string;
-    quantity: number;
-    price: number;
-}
-
-interface Order {
-    _id: string;
-    status: string;
-    totalAmount: number;
-    items: OrderItem[];
-    createdAt: string;
-    shippingAddress?: { name?: string };
-}
-
-interface Product {
-    _id: string;
-    name: string;
-    price: number;
-    stock: number;
-    category: string;
-}
-
-const STATUS_COLORS: Record<string, string> = {
-    pending: 'bg-yellow-50 text-yellow-700',
-    processing: 'bg-blue-50 text-blue-700',
-    shipped: 'bg-purple-50 text-purple-700',
-    delivered: 'bg-green-50 text-green-700',
-    cancelled: 'bg-red-50 text-red-700',
-};
+import { PRODUCTS } from '@/lib/data';
+import { DollarSign, ShoppingBag, Clock, Edit, Trash2 } from 'lucide-react';
 
 export default function AdminDashboard() {
-    const { admin } = useAdminAuth();
-    const [orders, setOrders] = useState<Order[]>([]);
-    const [products, setProducts] = useState<Product[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        if (!admin) return;
-        const headers = { Authorization: `Bearer ${admin.token}` };
-
-        Promise.all([
-            fetch('/api/orders', { headers }).then(r => r.json()),
-            fetch('/api/products').then(r => r.json()),
-        ]).then(([ordersData, productsData]) => {
-            setOrders(Array.isArray(ordersData) ? ordersData : []);
-            setProducts(Array.isArray(productsData) ? productsData : []);
-        }).finally(() => setLoading(false));
-    }, [admin]);
-
-    const totalRevenue = orders
-        .filter(o => o.status !== 'cancelled')
-        .reduce((sum, o) => sum + (o.totalAmount ?? 0), 0);
-
-    const pendingOrders = orders.filter(o => o.status === 'pending').length;
-    const recentOrders = orders.slice(0, 5);
-    const lowStockProducts = products.filter(p => (p.stock ?? 0) < 5);
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center h-64">
-                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            </div>
-        );
-    }
-
     return (
         <div className="max-w-6xl mx-auto space-y-8">
             <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-1">Dashboard</h1>
-                <p className="text-gray-500">Welcome back. Here&apos;s your store overview.</p>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Overview</h1>
+                <p className="text-gray-500">Welcome back. Here&apos;s what&apos;s happening with your store today.</p>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard
-                    icon={<IndianRupee className="text-green-600" size={22} />}
-                    iconBg="bg-green-50"
-                    label="Total Revenue"
-                    value={`₹${totalRevenue.toLocaleString('en-IN')}`}
-                    sub={`${orders.filter(o => o.status !== 'cancelled').length} orders`}
-                    subColor="text-green-600"
-                />
-                <StatCard
-                    icon={<Package className="text-purple-600" size={22} />}
-                    iconBg="bg-purple-50"
-                    label="Total Products"
-                    value={String(products.length)}
-                    sub="Live in store"
-                    subColor="text-purple-600"
-                />
-                <StatCard
-                    icon={<Clock className="text-orange-600" size={22} />}
-                    iconBg="bg-orange-50"
-                    label="Pending Orders"
-                    value={String(pendingOrders)}
-                    sub="Needs attention"
-                    subColor="text-orange-500"
-                />
-                <StatCard
-                    icon={<ShoppingBag className="text-blue-600" size={22} />}
-                    iconBg="bg-blue-50"
-                    label="Total Orders"
-                    value={String(orders.length)}
-                    sub="All time"
-                    subColor="text-blue-600"
-                />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Recent Orders */}
-                <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                        <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                            <TrendingUp size={18} className="text-primary" /> Recent Orders
-                        </h2>
-                        <Link href="/admin/orders" className="text-sm text-primary font-medium hover:underline">View all</Link>
+            {/* Widgets */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-start gap-4 hover:shadow-md transition-shadow">
+                    <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <DollarSign className="text-green-600" size={24} />
                     </div>
-                    {recentOrders.length === 0 ? (
-                        <div className="p-8 text-center text-gray-400 text-sm">No orders yet</div>
-                    ) : (
-                        <div className="divide-y divide-gray-50">
-                            {recentOrders.map(order => (
-                                <div key={order._id} className="px-6 py-4 flex items-center justify-between gap-4">
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-semibold text-gray-900 truncate">
-                                            {order.shippingAddress?.name ?? 'Customer'}
-                                        </p>
-                                        <p className="text-xs text-gray-400 mt-0.5">
-                                            {order.items?.length ?? 0} item{(order.items?.length ?? 0) !== 1 ? 's' : ''} · {new Date(order.createdAt).toLocaleDateString('en-IN')}
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center gap-3 flex-shrink-0">
-                                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${STATUS_COLORS[order.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                                            {order.status}
+                    <div>
+                        <p className="text-sm font-medium text-gray-500 mb-1">Total Revenue</p>
+                        <h3 className="text-3xl font-bold text-gray-900">$12,450.00</h3>
+                        <p className="text-xs text-green-600 font-medium mt-2">+14% from last month</p>
+                    </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-start gap-4 hover:shadow-md transition-shadow">
+                    <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <ShoppingBag className="text-purple-600" size={24} />
+                    </div>
+                    <div>
+                        <p className="text-sm font-medium text-gray-500 mb-1">Total Orders</p>
+                        <h3 className="text-3xl font-bold text-gray-900">342</h3>
+                        <p className="text-xs text-green-600 font-medium mt-2">+5% from last month</p>
+                    </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-start gap-4 hover:shadow-md transition-shadow">
+                    <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <Clock className="text-orange-600" size={24} />
+                    </div>
+                    <div>
+                        <p className="text-sm font-medium text-gray-500 mb-1">Pending Orders</p>
+                        <h3 className="text-3xl font-bold text-gray-900">18</h3>
+                        <p className="text-xs text-orange-500 font-medium mt-2">Requires attention</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Product Management Table */}
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white">
+                    <h2 className="text-xl font-bold text-gray-900">Recent Products</h2>
+                    <button className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-[#5A3FE0] transition-colors shadow-sm cursor-pointer">
+                        Add Product
+                    </button>
+                </div>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-gray-50/50 border-b border-gray-100">
+                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Category</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Stock</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {PRODUCTS.slice(0, 5).map(product => (
+                                <tr key={product.id} className="hover:bg-gray-50/50 transition-colors">
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden relative border border-gray-200">
+                                                <img src={product.image} alt={product.name} className="object-cover w-full h-full" />
+                                            </div>
+                                            <span className="font-semibold text-gray-900 text-sm">{product.name}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-lavender-light text-primary capitalize">
+                                            {product.category}
                                         </span>
-                                        <span className="text-sm font-bold text-gray-900">₹{(order.totalAmount ?? 0).toLocaleString('en-IN')}</span>
-                                    </div>
-                                </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                                        ${product.price.toFixed(2)}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-2.5 py-1 rounded-md text-xs font-semibold">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                                            In Stock
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex justify-end gap-2">
+                                            <button className="p-2 text-gray-400 hover:text-primary hover:bg-lavender-light rounded-lg transition-colors">
+                                                <Edit size={16} />
+                                            </button>
+                                            <button className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
                             ))}
-                        </div>
-                    )}
+                        </tbody>
+                    </table>
                 </div>
-
-                {/* Low Stock */}
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                        <h2 className="text-lg font-bold text-gray-900">Low Stock</h2>
-                        <Link href="/admin/products" className="text-sm text-primary font-medium hover:underline">Manage</Link>
-                    </div>
-                    {lowStockProducts.length === 0 ? (
-                        <div className="p-8 text-center text-gray-400 text-sm">All products well stocked</div>
-                    ) : (
-                        <div className="divide-y divide-gray-50">
-                            {lowStockProducts.map(p => (
-                                <div key={p._id} className="px-6 py-4 flex items-center justify-between">
-                                    <p className="text-sm font-medium text-gray-900 truncate max-w-[140px]">{p.name}</p>
-                                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${p.stock === 0 ? 'bg-red-50 text-red-600' : 'bg-orange-50 text-orange-600'}`}>
-                                        {p.stock === 0 ? 'Out of stock' : `${p.stock} left`}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                <div className="p-4 border-t border-gray-100 bg-gray-50/50 text-center">
+                    <button className="text-sm font-semibold text-primary hover:text-[#5A3FE0] transition-colors py-2 px-4 rounded-lg hover:bg-lavender-light">
+                        View All Products &rarr;
+                    </button>
                 </div>
-            </div>
-        </div>
-    );
-}
-
-function StatCard({ icon, iconBg, label, value, sub, subColor }: {
-    icon: React.ReactNode;
-    iconBg: string;
-    label: string;
-    value: string;
-    sub: string;
-    subColor: string;
-}) {
-    return (
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-start gap-4 hover:shadow-md transition-shadow">
-            <div className={`w-11 h-11 ${iconBg} rounded-xl flex items-center justify-center flex-shrink-0`}>
-                {icon}
-            </div>
-            <div>
-                <p className="text-sm font-medium text-gray-500 mb-1">{label}</p>
-                <h3 className="text-2xl font-bold text-gray-900">{value}</h3>
-                <p className={`text-xs font-medium mt-1 ${subColor}`}>{sub}</p>
             </div>
         </div>
     );
