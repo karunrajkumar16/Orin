@@ -6,18 +6,20 @@ import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, ShoppingCart, User, Menu, X } from 'lucide-react';
 import clsx from 'clsx';
+import { useCart } from '@/context/CartContext';
 
 const navLinks = [
     { name: 'Home', href: '/' },
     { name: 'Shop', href: '/shop' },
     { name: 'Custom Print', href: '/custom-print' },
-    { name: 'About', href: '/about' },
+    { name: 'Policies', href: '/policies' },
 ];
 
 export default function Navbar() {
     const [scrolled, setScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const pathname = usePathname();
+    const { cartCount } = useCart();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -64,12 +66,14 @@ export default function Navbar() {
 
                     <Link href="/cart" className="relative text-gray-700 hover:text-primary transition-colors">
                         <ShoppingCart size={20} />
-                        <span className="absolute -top-1.5 -right-2 bg-primary text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">
-                            0
-                        </span>
+                        {cartCount > 0 && (
+                            <span className="absolute -top-1.5 -right-2 bg-primary text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">
+                                {cartCount > 9 ? '9+' : cartCount}
+                            </span>
+                        )}
                     </Link>
 
-                    <Link href="/account" className="hidden md:block text-gray-700 hover:text-primary transition-colors">
+                    <Link href="/admin" className="hidden md:block text-gray-700 hover:text-primary transition-colors">
                         <User size={20} />
                     </Link>
 
@@ -106,12 +110,12 @@ export default function Navbar() {
                                 </Link>
                             ))}
                             <Link
-                                href="/account"
+                                href="/admin"
                                 onClick={() => setMobileMenuOpen(false)}
                                 className="text-base font-medium py-2 text-gray-600 flex items-center gap-2"
                             >
                                 <User size={18} />
-                                Account
+                                Admin
                             </Link>
                         </div>
                     </motion.div>

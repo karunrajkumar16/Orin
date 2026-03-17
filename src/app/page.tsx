@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { CATEGORIES, PRODUCTS } from '@/lib/data';
+import { motion, useScroll, useTransform, useMotionValueEvent } from 'framer-motion';
+import { CATEGORIES } from '@/lib/data';
+import { useProducts } from '@/hooks/useProducts';
 import ProductCard from '@/components/ui/ProductCard';
 import CategoryCard from '@/components/ui/CategoryCard';
 import { Button } from '@/components/ui/Button';
@@ -12,7 +13,7 @@ import { UploadCloud, Sliders, Box, ArrowDown } from 'lucide-react';
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 40 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
+  visible: { opacity: 1, y: 0, transition: { duration: 0.8 } }
 };
 
 const staggerContainer = {
@@ -26,7 +27,8 @@ const staggerContainer = {
 };
 
 export default function Home() {
-  const featuredProducts = PRODUCTS.slice(0, 6);
+  const { products } = useProducts();
+  const featuredProducts = products.slice(0, 6);
 
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -36,11 +38,9 @@ export default function Home() {
 
   const [scrollProgress, setScrollProgress] = useState(0);
 
-  useEffect(() => {
-    return scrollYProgress.onChange((latest) => {
-      setScrollProgress(latest);
-    });
-  }, [scrollYProgress]);
+  useMotionValueEvent(scrollYProgress, 'change', (latest) => {
+    setScrollProgress(latest);
+  });
 
   // Transform values for text fading and sliding based on scroll
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
@@ -175,7 +175,7 @@ export default function Home() {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {CATEGORIES.map((category, index) => (
+            {CATEGORIES.map((category) => (
               <motion.div
                 key={category.id}
                 variants={fadeInUp}
