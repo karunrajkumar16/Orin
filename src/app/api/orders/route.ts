@@ -2,11 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import Order from '@/models/Order';
 import { requireAuth } from '@/middleware/adminAuth';
+import { verifyToken } from '@/lib/auth';
+
+// Helper: try to get auth, but allow guest
+function tryAuth(req: NextRequest): { userId: string; role: string } | null {
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) return null;
+    try {
+        const payload = verifyToken(authHeader.slice(7));
+        return { userId: payload.userId, role: payload.role };
+    } catch {
+        return null;
+    }
+}
 import { calculateCartTotals } from '@/lib/data';
 
 export async function POST(req: NextRequest) {
-    const auth = requireAuth(req);
-    if ('error' in auth) return auth.error;
+    // Allow guest checkout — use 'guest' as userId if not logged in
+    const auth = tryAuth(req);
+    const userId = auth?.userId ?? 'guest';
 
     try {
         await connectDB();
@@ -19,7 +33,7 @@ export async function POST(req: NextRequest) {
         const totals = calculateCartTotals(items);
 
         const order = await Order.create({
-            userId: auth.userId,
+            userId,
             items,
             ...totals,
             totalAmount: totals.total,
@@ -39,7 +53,6 @@ export async function GET(req: NextRequest) {
 
     try {
         await connectDB();
-        // Admin gets all orders; regular users get only their own
         const filter = auth.role === 'admin' ? {} : { userId: auth.userId };
         const orders = await Order.find(filter).sort({ createdAt: -1 }).lean();
         return NextResponse.json(orders);

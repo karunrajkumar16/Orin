@@ -10,7 +10,7 @@ import { useCart } from '@/context/CartContext';
 import QuantitySelector from '@/components/ui/QuantitySelector';
 
 export default function ProductDetails({ params }: { params: { id: string } }) {
-    const { products } = useProducts();
+    const { products, loading } = useProducts();
     const { addToCart } = useCart();
     const [addedToCart, setAddedToCart] = useState(false);
 
@@ -19,7 +19,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
     const [show3D, setShow3D] = useState(false);
     const [copied, setCopied] = useState(false);
 
-    const product = products.find(p => p.id === params.id) ?? products[0];
+    const product = products.find(p => p.id === params.id);
 
     // Sync defaults when product loads
     useEffect(() => {
@@ -28,10 +28,18 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
         }
     }, [product?.id]);
 
-    if (!product) {
+    if (loading && !product) {
         return (
             <div className="container mx-auto px-6 py-32 text-center">
                 <p className="text-gray-500 text-lg">Loading product...</p>
+            </div>
+        );
+    }
+
+    if (!product) {
+        return (
+            <div className="container mx-auto px-6 py-32 text-center">
+                <p className="text-gray-500 text-lg">Product not found.</p>
             </div>
         );
     }

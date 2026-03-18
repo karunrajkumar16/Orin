@@ -111,7 +111,7 @@ export default function AdminProductsPage() {
         setSeeding(true);
         setSeedMsg('');
         try {
-            const res = await fetch('/api/seed', { method: 'POST' });
+            const res = await fetch('/api/seed?force=true', { method: 'POST' });
             const data = await res.json();
             setSeedMsg(data.message ?? data.error ?? 'Done');
             setTimeout(() => window.location.reload(), 1000);

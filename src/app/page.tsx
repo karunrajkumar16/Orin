@@ -27,7 +27,7 @@ const staggerContainer = {
 };
 
 export default function Home() {
-  const { products } = useProducts();
+  const { products, loading } = useProducts();
   const featuredProducts = products.slice(0, 6);
 
   const heroRef = useRef<HTMLDivElement>(null);
@@ -139,17 +139,23 @@ export default function Home() {
           </div>
 
           <motion.div variants={fadeInUp} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredProducts.map((product, index) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <ProductCard product={product} />
-              </motion.div>
-            ))}
+            {loading ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="bg-gray-100 rounded-2xl aspect-[3/4] animate-pulse" />
+              ))
+            ) : (
+              featuredProducts.map((product, index) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
+                  <ProductCard product={product} />
+                </motion.div>
+              ))
+            )}
           </motion.div>
 
           <div className="mt-12 text-center md:hidden">

@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { calculatePrintPrice } from '@/lib/data';
-import { UploadCloud, Image as ImageIcon, Box, AlertCircle, Info } from 'lucide-react';
+import { UploadCloud, Image as ImageIcon, Box, AlertCircle, Info, Check } from 'lucide-react';
 import QuantitySelector from '@/components/ui/QuantitySelector';
+import { useCart } from '@/context/CartContext';
+import { useRouter } from 'next/navigation';
 
 export default function CustomPrint() {
     const [uploadType, setUploadType] = useState<'3d' | '2d'>('3d');
@@ -12,6 +14,9 @@ export default function CustomPrint() {
     const [size, setSize] = useState<number>(5);
     const [material, setMaterial] = useState<'PLA' | 'ABS' | 'Resin'>('PLA');
     const [quantity, setQuantity] = useState<number>(1);
+    const [added, setAdded] = useState(false);
+    const { addToCart } = useCart();
+    const router = useRouter();
 
     // Price Calculation Logic
     const estimatedHours = size * 0.8; // rough estimate: 0.8h per inch
@@ -25,6 +30,23 @@ export default function CustomPrint() {
         estimatedPrintTimeHours: estimatedHours,
     });
     const totalPrice = unitPrice * quantity + conversionFee;
+
+    const handleAddToCart = () => {
+        if (!file) return;
+        addToCart({
+            productId: `custom-${Date.now()}`,
+            name: `Custom Print — ${file.name} (${material}, ${size}")`,
+            price: totalPrice,
+            quantity: 1,
+            image: '/images/plant_pot.png',
+            size: `${size}"`,
+        });
+        setAdded(true);
+        setTimeout(() => {
+            setAdded(false);
+            router.push('/cart');
+        }, 1200);
+    };
 
     return (
         <div className="container mx-auto px-6 md:px-12 py-12 md:py-20">
@@ -173,9 +195,10 @@ export default function CustomPrint() {
                         <Button
                             size="lg"
                             className={`w-full ${file ? 'bg-primary hover:bg-[#5A3FE0] text-white' : 'bg-gray-800 text-gray-400'} border-none shadow-none`}
-                            disabled={!file}
+                            disabled={!file || added}
+                            onClick={handleAddToCart}
                         >
-                            {file ? 'Add Custom Print to Cart' : 'Upload File to Continue'}
+                            {added ? <><Check size={18} className="inline mr-2" />Added to Cart!</> : file ? 'Add Custom Print to Cart' : 'Upload File to Continue'}
                         </Button>
 
                         {!file && (

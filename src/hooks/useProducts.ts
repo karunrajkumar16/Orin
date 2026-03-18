@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Product, PRODUCTS as STATIC_PRODUCTS } from '@/lib/data';
+import { Product } from '@/lib/data';
 
 // MongoDB returns _id instead of id — normalize it
 function normalize(p: Record<string, unknown>): Product {
@@ -9,23 +9,21 @@ function normalize(p: Record<string, unknown>): Product {
 }
 
 export function useProducts() {
-    const [products, setProducts] = useState<Product[]>(STATIC_PRODUCTS);
-    const [loading, setLoading] = useState(false);
+    const [products, setProducts] = useState<Product[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function fetchProducts() {
-            setLoading(true);
             try {
                 const res = await fetch('/api/products');
                 if (res.ok) {
                     const data = await res.json();
-                    if (Array.isArray(data) && data.length > 0) {
+                    if (Array.isArray(data)) {
                         setProducts(data.map(normalize));
-                        return;
                     }
                 }
             } catch {
-                // fall through to static data
+                // network error — leave empty
             } finally {
                 setLoading(false);
             }

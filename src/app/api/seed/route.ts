@@ -5,12 +5,21 @@ import User from '@/models/User';
 import { PRODUCTS } from '@/lib/data';
 import bcrypt from 'bcryptjs';
 
-export async function POST() {
+export async function POST(req: Request) {
     try {
         await connectDB();
-        const count = await Product.countDocuments();
-        if (count > 0) {
-            return NextResponse.json({ message: `Already seeded (${count} products exist)` });
+
+        // Allow force re-seed via query param ?force=true
+        const url = new URL(req.url);
+        const force = url.searchParams.get('force') === 'true';
+
+        if (!force) {
+            const count = await Product.countDocuments();
+            if (count > 0) {
+                return NextResponse.json({ message: `Already seeded (${count} products exist). Use ?force=true to re-seed.` });
+            }
+        } else {
+            await Product.deleteMany({});
         }
 
         const docs = PRODUCTS.map(p => ({

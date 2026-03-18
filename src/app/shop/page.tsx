@@ -15,7 +15,7 @@ function ShopContent() {
     const [activeCategory, setActiveCategory] = useState<string | null>(initCategory);
     const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
     
-    const { products } = useProducts();
+    const { products, loading } = useProducts();
 
     // Filter state
     const [priceRange, setPriceRange] = useState<number>(3000);
@@ -99,7 +99,13 @@ function ShopContent() {
                     <p className="text-sm text-gray-500">Showing {filteredProducts.length} results</p>
                 </div>
 
-                {filteredProducts.length > 0 ? (
+                {loading ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {Array.from({ length: 8 }).map((_, i) => (
+                            <div key={i} className="bg-gray-100 rounded-2xl aspect-[3/4] animate-pulse" />
+                        ))}
+                    </div>
+                ) : filteredProducts.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {filteredProducts.map(product => (
                             <ProductCard key={product.id} product={product} />
