@@ -1,7 +1,6 @@
 "use client";
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
 import { Trash2, ArrowRight } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
@@ -19,7 +18,8 @@ export default function Cart() {
                     {cartItems.map(item => (
                         <div key={item.productId} className="flex flex-col sm:flex-row gap-6 p-6 bg-white rounded-3xl border border-gray-100 shadow-sm items-center hover:shadow-md transition-shadow">
                             <div className="relative w-32 h-32 rounded-2xl overflow-hidden bg-gray-50 flex-shrink-0">
-                                <Image src={item.image} alt={item.name} fill className="object-cover" />
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                             </div>
 
                             <div className="flex-1 w-full flex flex-col justify-between h-full">

@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Lock, CreditCard, CheckCircle } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
-import Image from 'next/image';
 
 interface FormData {
     firstName: string;
@@ -186,7 +185,8 @@ export default function Checkout() {
                                             <div key={item.productId} className="flex justify-between items-center gap-3">
                                                 <div className="flex items-center gap-3 min-w-0">
                                                     <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0">
-                                                        <Image src={item.image} alt={item.name} fill className="object-cover" />
+                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                                                     </div>
                                                     <span className="text-sm font-medium text-gray-900 truncate">
                                                         {item.name} <span className="text-gray-400">x{item.quantity}</span>

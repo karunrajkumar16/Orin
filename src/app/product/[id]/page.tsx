@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import { useProducts } from '@/hooks/useProducts';
 import { Button } from '@/components/ui/Button';
 import { ShoppingCart, Share2, Check, ShieldCheck, Truck } from 'lucide-react';
@@ -95,12 +94,11 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
                                 <ThreeDViewer />
                             </div>
                         ) : (
-                            <Image
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
                                 src={product.image}
                                 alt={product.name}
-                                fill
-                                className="object-cover"
-                                priority
+                                className="w-full h-full object-cover"
                             />
                         )}
                     </div>

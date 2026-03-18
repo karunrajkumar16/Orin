@@ -1,6 +1,5 @@
 "use client";
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
@@ -8,6 +7,17 @@ import { ShoppingCart, Share2, Check } from 'lucide-react';
 import { Button } from './Button';
 import { Product } from '@/lib/data';
 import { useCart } from '@/context/CartContext';
+
+// Use <img> for base64 or external URLs, Next Image only for local /public paths
+function ProductImage({ src, alt, className }: { src: string; alt: string; className?: string }) {
+    const isLocal = src.startsWith('/');
+    if (isLocal) {
+        // eslint-disable-next-line @next/next/no-img-element
+        return <img src={src} alt={alt} className={className} />;
+    }
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={src} alt={alt} className={className} />;
+}
 
 interface ProductCardProps {
     product: Product;
@@ -62,12 +72,10 @@ export default function ProductCard({ product }: ProductCardProps) {
         >
             <div className="group bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 relative h-full flex flex-col">
                 <Link href={`/product/${product.id}`} className="block relative aspect-square overflow-hidden bg-gray-50 flex-shrink-0">
-                    <Image
+                    <ProductImage
                         src={product.image}
                         alt={product.name}
-                        fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                 </Link>
 

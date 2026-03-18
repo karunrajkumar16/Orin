@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, ShoppingCart, User, Menu, X } from 'lucide-react';
 import clsx from 'clsx';
 import { useCart } from '@/context/CartContext';
+import { useUserAuth } from '@/context/UserAuthContext';
 
 const navLinks = [
     { name: 'Home', href: '/' },
@@ -20,6 +21,7 @@ export default function Navbar() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const pathname = usePathname();
     const { cartCount } = useCart();
+    const { user } = useUserAuth();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -73,8 +75,11 @@ export default function Navbar() {
                         )}
                     </Link>
 
-                    <Link href="/admin" className="hidden md:block text-gray-700 hover:text-primary transition-colors">
+                    <Link href="/account" className="hidden md:flex items-center gap-1.5 text-gray-700 hover:text-primary transition-colors relative">
                         <User size={20} />
+                        {user && (
+                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white" />
+                        )}
                     </Link>
 
                     <button
@@ -110,12 +115,12 @@ export default function Navbar() {
                                 </Link>
                             ))}
                             <Link
-                                href="/admin"
+                                href="/account"
                                 onClick={() => setMobileMenuOpen(false)}
                                 className="text-base font-medium py-2 text-gray-600 flex items-center gap-2"
                             >
                                 <User size={18} />
-                                Admin
+                                {user ? user.name : 'Account'}
                             </Link>
                         </div>
                     </motion.div>

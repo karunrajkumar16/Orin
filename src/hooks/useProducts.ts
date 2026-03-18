@@ -16,14 +16,15 @@ export function useProducts() {
         async function fetchProducts() {
             try {
                 const res = await fetch('/api/products');
-                if (res.ok) {
-                    const data = await res.json();
-                    if (Array.isArray(data)) {
-                        setProducts(data.map(normalize));
-                    }
+                const data = await res.json();
+                console.log('[useProducts] API response:', res.status, data);
+                if (res.ok && Array.isArray(data)) {
+                    setProducts(data.map(normalize));
+                } else {
+                    console.error('[useProducts] Bad response:', data);
                 }
-            } catch {
-                // network error — leave empty
+            } catch (err) {
+                console.error('[useProducts] Fetch error:', err);
             } finally {
                 setLoading(false);
             }
