@@ -5,6 +5,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { CartProvider } from '@/context/CartContext';
 import { UserAuthProvider } from '@/context/UserAuthContext';
+import IntroScreen from '@/components/ui/IntroScreen';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -23,6 +24,7 @@ export default function RootLayout({
       <body className={`${inter.className} min-h-screen flex flex-col antialiased bg-background text-foreground`}>
         <UserAuthProvider>
           <CartProvider>
+            <IntroScreen />
             <Navbar />
             <main className="flex-grow flex flex-col pt-20">
               {children}
